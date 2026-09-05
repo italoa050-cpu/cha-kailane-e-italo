@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chá de Casa Nova - Kailane & Ítalo</title>
+
+    <!-- Fontes do Google -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+
+    <!-- 1. TELA DO ENVELOPE INICIAL -->
+    <div id="tela-envelope" class="tela-envelope">
+        <h1 class="titulo-convite">CONVITE ESPECIAL!</h1>
+        
+        <div class="envelope-box" onclick="abrirConvite()">
+            <div class="envelope-corpo">
+                <div class="dobra dobra-superior"></div>
+                <div class="dobra dobra-esquerda"></div>
+                <div class="dobra dobra-direita"></div>
+                <div class="dobra dobra-inferior"></div>
+
+                <div class="selo-amarelo">
+                    <span>CLIQUE<br>AQUI</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="nomes-casal-envelope">
+            <p class="nome-noivo">Kailane</p>
+            <p class="e-conjuncao">e</p>
+            <p class="nome-noiva">Ítalo</p>
+        </div>
+    </div>
+
+    <!-- 2. CONTEÚDO PRINCIPAL DO SITE -->
+    <div id="conteudo-site" class="conteudo-site hidden">
+        <section class="card-boas-vindas">
+    <div class="foto-casal-container">
+        <img src="{{ url_for('static', filename='img/casal.jpg') }}" alt="Foto do Casal" class="foto-casal">
+    </div>
+    
+    <h2 class="titulo-boas-vindas">Sejam bem-vindos ao nosso Chá de Casa Nova! 🥂✨</h2>
+    
+    <p class="mensagem-boas-vindas">
+        Estamos muito felizes em compartilhar esse momento tão especial com vocês! Montamos essa lista para ajudar na organização do nosso novo lar. Fiquem à vontade para escolher um presente ou, se preferirem, contribuir com qualquer valor via Pix!
+    </p>
+
+    <!-- 1. DATA, HORÁRIO E LOCAL (NOVO) -->
+    <div class="box-detalhes-evento">
+        <div class="item-evento">
+            <span class="icone-evento">📅</span>
+            <div>
+                <strong>Data</strong>
+                <p>25 de Outubro de 2026</p> <!-- Coloque sua data -->
+            </div>
+        </div>
+
+        <div class="item-evento">
+            <span class="icone-evento">⏰</span>
+            <div>
+                <strong>Horário</strong>
+                <p>A partir das 14:00h</p> <!-- Coloque seu horário -->
+            </div>
+        </div>
+
+        <div class="item-evento">
+            <span class="icone-evento">📍</span>
+            <div>
+                <strong>Local</strong>
+                <p>Rua Estaleirador n°159</p> <!-- Coloque seu endereço -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. CONFIRMAÇÃO DE PRESENÇA (CONTINUA AQUI DO MESMO JEITO) -->
+    <div class="card-box card-presenca">
+        <h3>Confirme sua Presença 💌</h3>
+        <p>Vai conseguir ir? Avise a gente para organizarmos tudo da melhor forma!</p>
+        
+        <form id="form-rsvp" onsubmit="confirmarPresenca(event)" class="form-row">
+            <input type="text" id="rsvp-nome" placeholder="Seu nome completo" required>
+            <select id="rsvp-quantas" required>
+                <option value="" disabled selected>Quantas pessoas vão</option>
+                <option value="1">Apenas eu (1)</option>
+                <option value="2">2 pessoas</option>
+                <option value="3">3 pessoas</option>
+                <option value="4">4 pessoas ou mais</option>
+            </select>
+            <input type="text" id="rsvp-whats" placeholder="Seu WhatsApp" required>
+            <button type="submit" class="btn-confirmar-presenca">Confirmar Presença</button>
+        </form>
+    </div>
+
+    <!-- 3. CHAVE PIX (CONTINUA AQUI) -->
+    <div class="box-pix-estilo-foto">
+        <div class="pix-linha-principal">
+            <span class="pix-icone-label">🔑 Chave Pix:</span>
+            <span id="chave-pix-texto" class="pix-chave-campo">11946666301</span>
+            <button onclick="copiarPix()" class="btn-copiar-pix-rosa">Copiar Pix 📋</button>
+        </div>
+        <p class="pix-subtexto">Nome: Kailane & Italo | Banco: Nubank</p>
+    </div>
+</section>
+
+            <!-- CONFIRMAÇÃO DE PRESENÇA (RSVP) -->
+       
+
+        <!-- FILTROS POR CÔMODO -->
+        <nav class="filtros-container">
+            <button class="btn-filtro active" onclick="filtrarCategoria('todos')">✨ Todos os Itens</button>
+            <button class="btn-filtro" onclick="filtrarCategoria('cozinha')">🍳 Cozinha</button>
+            <button class="btn-filtro" onclick="filtrarCategoria('sala')">🛋️ Sala</button>
+            <button class="btn-filtro" onclick="filtrarCategoria('quarto')">🛏️ Quarto</button>
+            <button class="btn-filtro" onclick="filtrarCategoria('banheiro')">🚿 Banheiro</button>
+            <button class="btn-filtro" onclick="filtrarCategoria('lavanderia')">🧹 Lavanderia</button>
+        </nav>
+
+        <!-- LISTA DE PRESENTES -->
+        <main class="lista-secoes">
+            {% set categorias = [
+                ('cozinha', '🍳 Cozinha'),
+                ('sala', '🛋️ Sala'),
+                ('quarto', '🛏️ Quarto'),
+                ('banheiro', '🚿 Banheiro'),
+                ('lavanderia', '🧹 Lavanderia')
+            ] %}
+
+            {% for cat_id, cat_nome in categorias %}
+            <section class="secao-comodo" data-categoria="{{ cat_id }}">
+                <h2 class="titulo-comodo">{{ cat_nome }}</h2>
+                <div class="grid-presentes">
+                    {% for p in presentes if p.categoria == cat_id %}
+                    <div class="card-presente {% if p.reservado %}reservado{% endif %}" id="card-{{ p.id }}">
+                        
+                        <!-- FOTO DO PRESENTE -->
+                       <!-- FOTO DO PRESENTE -->
+<div class="card-header-foto">
+    {% if p['imagem'] and p['imagem'] != '' %}
+        <div class="foto-item-container">
+            <img src="{{ p['imagem'] }}" alt="{{ p['nome'] }}" class="foto-item">
+        </div>
+    {% else %}
+        <div class="foto-placeholder">🎁</div>
+    {% endif %}
+
+    {% if p['reservado'] %}
+        <span class="badge-status">Já Escolhido ❤️</span>
+    {% endif %}
+</div>
+
+                        <div class="card-conteudo">
+                            <h3>{{ p.nome }}</h3>
+                            {% if not p.reservado %}
+                                <a href="{{ p.link }}" target="_blank" class="btn-shopee">🛒 Ver sugestão na Shopee</a>
+                                <div class="form-reserva">
+                                    <input type="text" id="nome-{{ p.id }}" placeholder="Seu nome">
+                                    <input type="text" id="whats-{{ p.id }}" placeholder="Seu WhatsApp">
+                                    <button onclick="reservarItem({{ p.id }})" class="btn-reservar">Já comprei este presente</button>
+                                </div>
+                            {% else %}
+                                <div class="alerta-reservado">
+                                    <span class="tag-indisponivel">INDISPONÍVEL</span>
+                                    <p class="reservado-msg">Presente já escolhido por <strong>{{ p.reservado_por }}</strong></p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endfor %}
+        </main>
+
+    </div>
+
+    <script>
+        function abrirConvite() {
+            const envelope = document.getElementById('tela-envelope');
+            const conteudo = document.getElementById('conteudo-site');
+            
+            envelope.style.opacity = '0';
+            setTimeout(() => {
+                envelope.style.display = 'none';
+                conteudo.classList.remove('hidden');
+                conteudo.style.opacity = '1';
+            }, 400);
+        }
+
+        function copiarPix() {
+            const chave = document.getElementById("chave-pix-texto").innerText;
+            navigator.clipboard.writeText(chave);
+            alert("Chave Pix copiada com sucesso! 📋");
+        }
+
+        function filtrarCategoria(categoria) {
+            document.querySelectorAll('.btn-filtro').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            const secoes = document.querySelectorAll('.secao-comodo');
+            secoes.forEach(secao => {
+                if (categoria === 'todos' || secao.dataset.categoria === categoria) {
+                    secao.style.display = 'block';
+                } else {
+                    secao.style.display = 'none';
+                }
+            });
+        }
+
+        async function reservarItem(id) {
+            const nome = document.getElementById(`nome-${id}`).value;
+            const whatsapp = document.getElementById(`whats-${id}`).value;
+
+            if (!nome || !whatsapp) {
+                alert('Por favor, preencha seu nome e WhatsApp!');
+                return;
+            }
+
+            const resposta = await fetch(`/reservar/${id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nome, whatsapp })
+            });
+
+            const res = await resposta.json();
+
+            if (res.sucesso) {
+                confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+                const card = document.getElementById(`card-${id}`);
+                card.classList.add('reservado');
+                card.querySelector('.card-conteudo').innerHTML = `
+                    <h3>${card.querySelector('h3').innerText}</h3>
+                    <div class="alerta-reservado">
+                        <span class="tag-indisponivel">INDISPONÍVEL</span>
+                        <p class="reservado-msg">Presente já escolhido por <strong>${nome}</strong></p>
+                    </div>
+                `;
+            } else {
+                alert(res.mensagem);
+            }
+        }
+
+        async function confirmarPresenca(e) {
+            e.preventDefault();
+            const nome = document.getElementById('rsvp-nome').value;
+            const quantas = document.getElementById('rsvp-quantas').value;
+            const whatsapp = document.getElementById('rsvp-whats').value;
+
+            const resposta = await fetch('/confirmar-presenca', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nome, acompanhantes: quantas, whatsapp })
+            });
+
+            const res = await resposta.json();
+            if (res.sucesso) {
+                confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
+                alert('Presença confirmada com sucesso! Mal podemos esperar por esse momento!');
+                document.getElementById('form-rsvp').reset();
+            }
+        }
+    </script>
+</body>
+</html>

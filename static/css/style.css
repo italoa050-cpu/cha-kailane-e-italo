@@ -1,0 +1,570 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+body {
+    background-color: #f8fafc;
+    color: #334155;
+    padding-bottom: 50px;
+}
+
+/* ==========================================
+   1. TELA DO ENVELOPE INICIAL (CENTRALIZADO)
+   ========================================== */
+.tela-envelope {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #f4efea;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 0.4s ease;
+    padding: 20px;
+}
+
+.titulo-convite {
+    font-size: 1.25rem;
+    letter-spacing: 5px;
+    color: #4a4a4a;
+    margin-bottom: 30px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.envelope-box {
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    margin-bottom: 25px;
+}
+
+.envelope-box:hover {
+    transform: scale(1.03);
+}
+
+.envelope-corpo {
+    width: 320px;
+    height: 200px;
+    background-color: #2b2d31;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+}
+
+/* Dobras do Envelope */
+.dobra {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-style: solid;
+}
+
+.dobra-superior {
+    top: 0;
+    left: 0;
+    border-width: 100px 160px 0 160px;
+    border-color: #36393f transparent transparent transparent;
+}
+
+.dobra-esquerda {
+    top: 0;
+    left: 0;
+    border-width: 100px 0 100px 160px;
+    border-color: transparent transparent transparent #232428;
+}
+
+.dobra-direita {
+    top: 0;
+    right: 0;
+    border-width: 100px 160px 100px 0;
+    border-color: transparent #232428 transparent transparent;
+}
+
+.dobra-inferior {
+    bottom: 0;
+    left: 0;
+    border-width: 0 160px 100px 160px;
+    border-color: transparent transparent #1e1f22 transparent;
+}
+
+/* Selo Amarelo Central */
+.selo-amarelo {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 76px;
+    height: 76px;
+    background-color: #f59e0b;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    border: 3px solid #d97706;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+    z-index: 10;
+}
+
+.selo-amarelo span {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.1;
+    letter-spacing: 0.5px;
+}
+
+/* NOMES EM FONTE CURSIVA */
+.nomes-casal-envelope {
+    text-align: center;
+    color: #333333;
+    line-height: 0.9;
+}
+
+.nomes-casal-envelope .nome-noivo,
+.nomes-casal-envelope .nome-noiva {
+    font-family: 'Alex Brush', cursive !important;
+    font-size: 4.8rem;
+    font-weight: 400;
+}
+
+.nomes-casal-envelope .e-conjuncao {
+    font-family: 'Alex Brush', cursive !important;
+    font-size: 2.2rem;
+    color: #555555;
+    margin: -12px 0;
+}
+
+.hidden {
+    display: none;
+    opacity: 0;
+}
+
+.conteudo-site {
+    transition: opacity 0.5s ease;
+}
+
+/* ==========================================
+   2. CARD DE BOAS-VINDAS, CONFIRMAÇÃO & PIX
+   ========================================== */
+.card-boas-vindas {
+    background: #ffffff;
+    max-width: 800px;
+    margin: 30px auto;
+    padding: 35px 25px;
+    border-radius: 24px;
+    text-align: center;
+    box-shadow: 0 4px 25px rgba(0,0,0,0.04);
+}
+
+.foto-casal-container {
+    width: 140px;
+    height: 140px;
+    margin: 0 auto 18px auto;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 4px solid #f87171;
+}
+
+.foto-casal {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.titulo-boas-vindas {
+    font-size: 1.5rem;
+    color: #1e293b;
+    margin-bottom: 12px;
+    font-weight: 700;
+}
+
+.mensagem-boas-vindas {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #64748b;
+    max-width: 680px;
+    margin: 0 auto 25px auto;
+}
+
+/* BOX CONFIRMAR PRESENÇA */
+.card-box {
+    background: #f8fafc;
+    border-radius: 16px;
+    padding: 22px;
+    margin: 20px auto;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+    max-width: 620px;
+}
+
+.card-presenca h3 {
+    font-size: 1.2rem;
+    color: #1e293b;
+    margin-bottom: 6px;
+    font-weight: 700;
+}
+
+.card-presenca p {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin-bottom: 15px;
+}
+
+.form-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.form-row input, .form-row select {
+    padding: 10px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    outline: none;
+    background: #ffffff;
+    flex: 1;
+    min-width: 180px;
+}
+
+.btn-confirmar-presenca {
+    width: 100%;
+    background-color: #22c55e;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 5px;
+    font-size: 0.95rem;
+    transition: background 0.2s;
+}
+
+.btn-confirmar-presenca:hover {
+    background-color: #16a34a;
+}
+
+/* CAIXA DE PIX COM BORDA ROSA TRACEJADA */
+.box-pix-estilo-foto {
+    background-color: #fdf2f4;
+    border: 1.5px dashed #f472b6;
+    border-radius: 16px;
+    padding: 20px;
+    margin: 20px auto 0 auto;
+    max-width: 620px;
+}
+
+.pix-linha-principal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.pix-icone-label {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 0.95rem;
+}
+
+.pix-chave-campo {
+    background: #ffffff;
+    border: 1px solid #fbcfe8;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #be123c;
+    font-weight: 600;
+}
+
+.btn-copiar-pix-rosa {
+    background-color: #be185d;
+    color: #ffffff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-copiar-pix-rosa:hover {
+    background-color: #9d174d;
+}
+
+.pix-subtexto {
+    font-size: 0.82rem;
+    color: #9f1239;
+    margin-top: 6px;
+}
+
+/* ==========================================
+   3. FILTROS DE CÔMODOS
+   ========================================== */
+.filtros-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    max-width: 800px;
+    margin: 25px auto;
+    padding: 0 10px;
+}
+
+.btn-filtro {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-filtro.active, .btn-filtro:hover {
+    background: #4f46e5;
+    color: #ffffff;
+    border-color: #4f46e5;
+}
+
+/* ==========================================
+   4. LISTA DE PRESENTES E CARDS
+   ========================================== */
+.lista-secoes {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
+.secao-comodo {
+    margin-bottom: 35px;
+}
+
+.titulo-comodo {
+    font-size: 1.25rem;
+    margin-bottom: 15px;
+    color: #1e293b;
+    font-weight: 700;
+}
+
+.grid-presentes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 18px;
+}
+
+.card-presente {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 18px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+    display: flex;
+    flex-direction: column;
+}
+
+.card-presente.reservado {
+    opacity: 0.65;
+    background: #f1f5f9;
+}
+
+/* FOTOS DOS PRESENTES */
+.card-header-foto {
+    position: relative;
+    width: 100%;
+    margin-bottom: 12px;
+}
+
+.foto-item-container {
+    width: 100%;
+    height: 180px;
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: #f1f5f9;
+}
+
+.foto-item {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.card-presente:hover .foto-item {
+    transform: scale(1.05);
+}
+
+.foto-placeholder {
+    width: 100%;
+    height: 140px;
+    background-color: #f8fafc;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2.5rem;
+}
+
+.badge-status {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #fecdd3;
+    color: #be123c;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.card-conteudo {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.card-conteudo h3 {
+    font-size: 0.95rem;
+    color: #1e293b;
+    margin-bottom: 12px;
+    line-height: 1.3;
+}
+
+.btn-shopee {
+    display: block;
+    text-align: center;
+    background: #ff5722;
+    color: white;
+    text-decoration: none;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    transition: background 0.2s;
+}
+
+.btn-shopee:hover {
+    background: #e64a19;
+}
+
+.form-reserva {
+    margin-top: auto;
+}
+
+.form-reserva input {
+    width: 100%;
+    padding: 9px 12px;
+    margin-bottom: 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    outline: none;
+}
+
+.btn-reservar {
+    width: 100%;
+    background: #e11d48;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+}
+
+.btn-reservar:hover {
+    background: #be123c;
+}
+
+.alerta-reservado {
+    text-align: center;
+    padding: 10px 0;
+    margin-top: auto;
+}
+
+.tag-indisponivel {
+    background: #ef4444;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 4px;
+}
+
+.reservado-msg {
+    font-size: 0.85rem;
+    margin-top: 6px;
+    color: #475569;
+}
+/* BOX DE DETALHES DO EVENTO */
+.box-detalhes-evento {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    gap: 15px;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 20px;
+    margin: 20px auto 25px auto;
+    max-width: 620px;
+    flex-wrap: wrap;
+}
+
+.item-evento {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+}
+
+.icone-evento {
+    font-size: 1.8rem;
+    background: #ffffff;
+    padding: 8px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.item-evento strong {
+    display: block;
+    font-size: 0.8rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.item-evento p {
+    font-size: 0.95rem;
+    color: #1e293b;
+    font-weight: 700;
+    margin: 0;
+}
+
+@media (max-width: 600px) {
+    .box-detalhes-evento {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+}
