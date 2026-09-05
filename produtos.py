@@ -1,5 +1,5 @@
 produtos = [
-    ("Descanso de Panela / Suporte / Porta Tempero", "", "https://shope.ee/UVensRKg"),
+    ("Descanso de Panela / Suporte / Porta Tempero", "", "https://shopee.com.br/product/1107305320/23294138680?d_id=a625c&uls_trackid=56ihsqe4021f&utm_content=4Xfyq668AFUXR9rUk2Y2DQhRxPPM"),
     ("Cortina Luxo Para Sala 4,00m x 2,60m", "", "https://shope.ee/9MtB1dLD"),
     ("Cortina de Voil com Blackout 2,80 x 2,30", "", "https://shope.ee/piJy73M6"),
     ("Varal de Chão 3 Andares Dobrável", "", "https://shope.ee/zeahSZZz"),
