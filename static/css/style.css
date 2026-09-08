@@ -568,3 +568,18 @@ body {
         gap: 16px;
     }
 }
+.box-observacao {
+    background-color: #f9f6f0;
+    border-left: 4px solid #d4a373;
+    padding: 12px 16px;
+    margin: 20px 0;
+    border-radius: 8px;
+    text-align: left;
+    font-size: 0.9em;
+    color: #4a4a4a;
+}
+
+.box-observacao p {
+    margin: 4px 0;
+    line-height: 1.4;
+}
