@@ -64,5 +64,18 @@ def confirmar_presenca():
     # Aqui você pode salvar numa tabela de RSVP se tiver, ou apenas confirmar o sucesso
     return jsonify({'sucesso': True})
 
+@app.route('/admin')
+def admin():
+    conn = sqlite3.connect('database.db') # ou o nome correto do seu arquivo .db
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, nome, whatsapp, acompanhantes FROM presencas ORDER BY id DESC")
+    presencas = cursor.fetchall()
+    conn.close()
+    
+    # Calcula o total de pessoas (convidado + acompanhantes)
+    total_pessoas = sum(1 + (p[3] if p[3] else 0) for p in presencas)
+    
+    return render_template('admin.html', presencas=presencas, total_pessoas=total_pessoas)
+
 if __name__ == '__main__':
     app.run(debug=True)
