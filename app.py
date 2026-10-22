@@ -11,7 +11,6 @@ app = Flask(__name__)
 app.secret_key = 'sua_chave_secreta_aqui'
 
 def get_db_connection():
-    """Conecta ao PostgreSQL se estiver no Render, ou ao SQLite local."""
     database_url = os.environ.get('DATABASE_URL')
     if database_url and psycopg2:
         return psycopg2.connect(database_url)
@@ -25,12 +24,10 @@ def get_db_connection():
     return conn
 
 def init_db():
-    """Cria as tabelas de presenças e presentes se não existirem."""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Tabela de Presenças Confimadas
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS presencas (
                 id SERIAL PRIMARY KEY,
@@ -40,7 +37,6 @@ def init_db():
             )
         ''')
         
-        # Tabela de Presentes Escolhidos
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS presentes_escolhidos (
                 id SERIAL PRIMARY KEY,
@@ -58,7 +54,23 @@ init_db()
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Busca presentes já escolhidos
+        try:
+            cursor.execute("SELECT item, nome_convidado FROM presentes_escolhidos")
+            escolhidos_db = cursor.fetchall()
+            escolhidos = {row[0]: row[1] for row in escolhidos_db}
+        except Exception:
+            escolhidos = {}
+            
+        conn.close()
+        return render_template('index.html', presentes_escolhidos=escolhidos)
+    except Exception as e:
+        print(f"Erro na pagina principal: {e}")
+        return render_template('index.html', presentes_escolhidos={})
 
 @app.route('/confirmar_presenca', methods=['POST'])
 def confirmar_presenca():
@@ -90,9 +102,32 @@ def confirmar_presenca():
 
     return redirect(url_for('index'))
 
+@app.route('/escolher_presente', methods=['POST'])
+def escolher_presente():
+    item = request.form.get('item')
+    nome_convidado = request.form.get('nome_convidado')
+
+    if item and nome_convidado:
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            is_postgres = bool(os.environ.get('DATABASE_URL'))
+            
+            query = (
+                "INSERT INTO presentes_escolhidos (item, nome_convidado) VALUES (%s, %s)"
+                if is_postgres else
+                "INSERT INTO presentes_escolhidos (item, nome_convidado) VALUES (?, ?)"
+            )
+            cursor.execute(query, (item, nome_convidado))
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print(f"Erro ao salvar presente: {e}")
+
+    return redirect(url_for('index'))
+
 @app.route('/admin')
 def admin():
-    """Visualização das Pessoas Confirmadas e Presentes Comprados"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -101,7 +136,7 @@ def admin():
         cursor.execute("SELECT id, nome, whatsapp, acompanhantes FROM presencas ORDER BY id DESC")
         presencas = cursor.fetchall()
         
-        # Busca presentes marcados/comprados
+        # Busca presentes escolhidos
         try:
             cursor.execute("SELECT id, item, nome_convidado FROM presentes_escolhidos ORDER BY id DESC")
             presentes = cursor.fetchall()
@@ -110,7 +145,6 @@ def admin():
             
         conn.close()
         
-        # Soma total de convidados
         total_pessoas = 0
         for p in presencas:
             try:
