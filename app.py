@@ -1,81 +1,127 @@
-from flask import Flask, render_template, request, jsonify
+import os
 import sqlite3
+from flask import Flask, render_template, request, redirect, url_for, flash
+
+try:
+    import psycopg2
+except ImportError:
+    psycopg2 = None
 
 app = Flask(__name__)
+app.secret_key = 'sua_chave_secreta_aqui'
 
-def get_db():
-    conn = sqlite3.connect('database.db')
-    # Configura para acessar as colunas pelo nome (ex: p['imagem'], p['nome'])
+def get_db_connection():
+    """Conecta ao PostgreSQL se estiver no Render, ou ao SQLite local."""
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url and psycopg2:
+        return psycopg2.connect(database_url)
+    
+    db_path = os.path.join(os.path.dirname(__file__), 'database.db')
+    if not os.path.exists(db_path):
+        db_path = os.path.join(os.path.dirname(__file__), 'database', 'database.db')
+    
+    conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
 
+def init_db():
+    """Cria as tabelas de presenças e presentes se não existirem."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Tabela de Presenças Confimadas
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS presencas (
+                id SERIAL PRIMARY KEY,
+                nome TEXT NOT NULL,
+                whatsapp TEXT NOT NULL,
+                acompanhantes INTEGER DEFAULT 0
+            )
+        ''')
+        
+        # Tabela de Presentes Escolhidos
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS presentes_escolhidos (
+                id SERIAL PRIMARY KEY,
+                item TEXT NOT NULL,
+                nome_convidado TEXT NOT NULL
+            )
+        ''')
+        
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Erro ao inicializar banco: {e}")
+
+init_db()
+
 @app.route('/')
 def index():
-    conn = get_db()
-    # Garante acesso via chave no Jinja2 (p.imagem / p['imagem'])
-    conn.row_factory = sqlite3.Row 
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM presentes')
-    presentes = cursor.fetchall()
-    conn.close()
-    return render_template('index.html', presentes=presentes)
+    return render_template('index.html')
 
-@app.route('/reservar/<int:item_id>', methods=['POST'])
-def reservar(item_id):
-    dados = request.get_json()
-    nome = dados.get('nome')
-    whatsapp = dados.get('whatsapp')
-
-    if not nome or not whatsapp:
-        return jsonify({'sucesso': False, 'mensagem': 'Por favor, preencha nome e WhatsApp.'})
-
-    conn = get_db()
-    cursor = conn.cursor()
-    
-    # Verifica se o item já não foi reservado por outra pessoa
-    cursor.execute('SELECT reservado FROM presentes WHERE id = ?', (item_id,))
-    item = cursor.fetchone()
-
-    if item and item['reservado'] == 1:
-        conn.close()
-        return jsonify({'sucesso': False, 'mensagem': 'Este item já foi reservado por outra pessoa!'})
-
-    # Atualiza o status para reservado
-    cursor.execute('''
-        UPDATE presentes 
-        SET reservado = 1, reservado_por = ?, whatsapp = ? 
-        WHERE id = ?
-    ''', (nome, whatsapp, item_id))
-    
-    conn.commit()
-    conn.close()
-    return jsonify({'sucesso': True})
-
-@app.route('/confirmar-presenca', methods=['POST'])
+@app.route('/confirmar_presenca', methods=['POST'])
 def confirmar_presenca():
-    dados = request.get_json()
-    nome = dados.get('nome')
-    acompanhantes = dados.get('acompanhantes')
-    whatsapp = dados.get('whatsapp')
+    nome = request.form.get('nome')
+    whatsapp = request.form.get('whatsapp')
+    acompanhantes = request.form.get('acompanhantes', 0)
 
     if not nome or not whatsapp:
-        return jsonify({'sucesso': False, 'mensagem': 'Preencha os campos obrigatórios.'})
+        flash('Por favor, preencha nome e WhatsApp!', 'danger')
+        return redirect(url_for('index'))
 
-    # Aqui você pode salvar numa tabela de RSVP se tiver, ou apenas confirmar o sucesso
-    return jsonify({'sucesso': True})
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        is_postgres = bool(os.environ.get('DATABASE_URL'))
+        
+        query = (
+            "INSERT INTO presencas (nome, whatsapp, acompanhantes) VALUES (%s, %s, %s)"
+            if is_postgres else
+            "INSERT INTO presencas (nome, whatsapp, acompanhantes) VALUES (?, ?, ?)"
+        )
+        cursor.execute(query, (nome, whatsapp, acompanhantes))
+        conn.commit()
+        conn.close()
+        flash('Presença confirmada com sucesso!', 'success')
+    except Exception as e:
+        print(f"Erro ao salvar presença: {e}")
+        flash('Erro ao confirmar presença.', 'danger')
+
+    return redirect(url_for('index'))
 
 @app.route('/admin')
 def admin():
-    conn = sqlite3.connect('database.db') # ou o nome correto do seu arquivo .db
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, nome, whatsapp, acompanhantes FROM presencas ORDER BY id DESC")
-    presencas = cursor.fetchall()
-    conn.close()
-    
-    # Calcula o total de pessoas (convidado + acompanhantes)
-    total_pessoas = sum(1 + (p[3] if p[3] else 0) for p in presencas)
-    
-    return render_template('admin.html', presencas=presencas, total_pessoas=total_pessoas)
+    """Visualização das Pessoas Confirmadas e Presentes Comprados"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Busca presenças
+        cursor.execute("SELECT id, nome, whatsapp, acompanhantes FROM presencas ORDER BY id DESC")
+        presencas = cursor.fetchall()
+        
+        # Busca presentes marcados/comprados
+        try:
+            cursor.execute("SELECT id, item, nome_convidado FROM presentes_escolhidos ORDER BY id DESC")
+            presentes = cursor.fetchall()
+        except Exception:
+            presentes = []
+            
+        conn.close()
+        
+        # Soma total de convidados
+        total_pessoas = 0
+        for p in presencas:
+            try:
+                acomp = int(p[3]) if p[3] is not None else 0
+            except (ValueError, TypeError):
+                acomp = 0
+            total_pessoas += 1 + acomp
+        
+        return render_template('admin.html', presencas=presencas, presentes=presentes, total_pessoas=total_pessoas)
+    except Exception as e:
+        return f"Erro ao acessar admin: {e}", 500
 
 if __name__ == '__main__':
     app.run(debug=True)
