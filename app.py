@@ -218,6 +218,52 @@ def admin():
         return render_template('admin.html', presencas=presencas, presentes=presentes, total_pessoas=total_pessoas)
     except Exception as e:
         return f"Erro ao acessar admin: {e}", 500
+    
+@app.route('/restaurar_dados_antigos')
+def restaurar_dados_antigos():
+    """Rota temporária para copiar os dados do SQLite local para o PostgreSQL no Render"""
+    db_path = os.path.join(os.path.dirname(__file__), 'database.db')
+    if not os.path.exists(db_path):
+        db_path = os.path.join(os.path.dirname(__file__), 'database', 'database.db')
+
+    if not os.path.exists(db_path):
+        return "Banco de dados local não encontrado no servidor.", 404
+
+    try:
+        conn_local = sqlite3.connect(db_path)
+        cursor_local = conn_local.cursor()
+
+        conn_pg = get_db_connection()
+        cursor_pg = conn_pg.cursor()
+
+        # Copia Presenças do SQLite para o Postgres
+        try:
+            cursor_local.execute("SELECT nome, whatsapp, acompanhantes FROM presencas")
+            for p in cursor_local.fetchall():
+                cursor_pg.execute(
+                    "INSERT INTO presencas (nome, whatsapp, acompanhantes) VALUES (%s, %s, %s)",
+                    (p[0], p[1], p[2])
+                )
+        except Exception as e:
+            print(f"Erro presencas: {e}")
+
+        # Copia Presentes Escolhidos do SQLite para o Postgres
+        try:
+            cursor_local.execute("SELECT id, item, nome_convidado, whatsapp FROM presentes_escolhidos")
+            for pr in cursor_local.fetchall():
+                cursor_pg.execute(
+                    "INSERT INTO presentes_escolhidos (id, item, nome_convidado, whatsapp) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING",
+                    (pr[0], pr[1], pr[2], pr[3])
+                )
+        except Exception as e:
+            print(f"Erro presentes: {e}")
+
+        conn_pg.commit()
+        conn_pg.close()
+        conn_local.close()
+        return "✅ Dados antigos restaurados com sucesso no Render!"
+    except Exception as e:
+        return f"Erro na restauração: {e}", 500
 
 if __name__ == '__main__':
     app.run(debug=True)
