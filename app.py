@@ -1,6 +1,6 @@
 import os
 import sqlite3
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, jsonify
 
 try:
     import psycopg2
@@ -28,20 +28,23 @@ def init_db():
         conn = get_db_connection()
         cursor = conn.cursor()
         
+        # Tabela de Presenças Confirmadas
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS presencas (
                 id SERIAL PRIMARY KEY,
                 nome TEXT NOT NULL,
                 whatsapp TEXT NOT NULL,
-                acompanhantes INTEGER DEFAULT 0
+                acompanhantes INTEGER DEFAULT 1
             )
         ''')
         
+        # Tabela de Presentes Reservados
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS presentes_escolhidos (
-                id SERIAL PRIMARY KEY,
+                id INTEGER PRIMARY KEY,
                 item TEXT NOT NULL,
-                nome_convidado TEXT NOT NULL
+                nome_convidado TEXT NOT NULL,
+                whatsapp TEXT NOT NULL
             )
         ''')
         
@@ -52,35 +55,86 @@ def init_db():
 
 init_db()
 
+# Lista Completa dos Presentes
+LISTA_PRESENTES = [
+    {"id": 1, "nome": "Jogo de Panelas", "categoria": "cozinha", "imagem": "/static/img/panelas.jpg", "link": "https://shopee.com.br"},
+    {"id": 2, "nome": "Aparelho de Jantar", "categoria": "cozinha", "imagem": "/static/img/jantar.jpg", "link": "https://shopee.com.br"},
+    {"id": 3, "nome": "Jogo de Faqueiro", "categoria": "cozinha", "imagem": "/static/img/faqueiro.jpg", "link": "https://shopee.com.br"},
+    {"id": 4, "nome": "Almofadas Decorativas", "categoria": "sala", "imagem": "/static/img/almofadas.jpg", "link": "https://shopee.com.br"},
+    {"id": 5, "nome": "Jogo de Cama Casal", "categoria": "quarto", "imagem": "/static/img/cama.jpg", "link": "https://shopee.com.br"},
+    {"id": 6, "nome": "Jogo de Toalhas", "categoria": "banheiro", "imagem": "/static/img/toalhas.jpg", "link": "https://shopee.com.br"},
+    {"id": 7, "nome": "Cesto de Roupas", "categoria": "lavanderia", "imagem": "/static/img/cesto.jpg", "link": "https://shopee.com.br"}
+]
+
 @app.route('/')
 def index():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Busca presentes já escolhidos
-        try:
-            cursor.execute("SELECT item, nome_convidado FROM presentes_escolhidos")
-            escolhidos_db = cursor.fetchall()
-            escolhidos = {row[0]: row[1] for row in escolhidos_db}
-        except Exception:
-            escolhidos = {}
-            
+        cursor.execute("SELECT id, item, nome_convidado FROM presentes_escolhidos")
+        reservados_db = cursor.fetchall()
         conn.close()
-        return render_template('index.html', presentes_escolhidos=escolhidos)
+        
+        # Cria um dicionário de quais itens estão reservados
+        reservas = {row[0]: row[2] for row in reservados_db}
     except Exception as e:
-        print(f"Erro na pagina principal: {e}")
-        return render_template('index.html', presentes_escolhidos={})
+        print(f"Erro ao buscar reservas: {e}")
+        reservas = {}
 
-@app.route('/confirmar_presenca', methods=['POST'])
-def confirmar_presenca():
-    nome = request.form.get('nome')
-    whatsapp = request.form.get('whatsapp')
-    acompanhantes = request.form.get('acompanhantes', 0)
+    # Monta a lista completa com o status de reservado
+    presentes_processados = []
+    for item in LISTA_PRESENTES:
+        item_copy = item.copy()
+        if item['id'] in reservas:
+            item_copy['reservado'] = True
+            item_copy['reservado_por'] = reservas[item['id']]
+        else:
+            item_copy['reservado'] = False
+            item_copy['reservado_por'] = ''
+        presentes_processados.append(item_copy)
+
+    return render_template('index.html', presentes=presentes_processados)
+
+@app.route('/reservar/<int:item_id>', methods=['POST'])
+def reservar_item(item_id):
+    data = request.get_json()
+    nome = data.get('nome')
+    whatsapp = data.get('whatsapp')
 
     if not nome or not whatsapp:
-        flash('Por favor, preencha nome e WhatsApp!', 'danger')
-        return redirect(url_for('index'))
+        return jsonify({'sucesso': False, 'mensagem': 'Preencha nome e WhatsApp!'})
+
+    item_obj = next((item for item in LISTA_PRESENTES if item['id'] == item_id), None)
+    item_nome = item_obj['nome'] if item_obj else f"Item #{item_id}"
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        is_postgres = bool(os.environ.get('DATABASE_URL'))
+        
+        query = (
+            "INSERT INTO presentes_escolhidos (id, item, nome_convidado, whatsapp) VALUES (%s, %s, %s, %s)"
+            if is_postgres else
+            "INSERT INTO presentes_escolhidos (id, item, nome_convidado, whatsapp) VALUES (?, ?, ?, ?)"
+        )
+        cursor.execute(query, (item_id, item_nome, nome, whatsapp))
+        conn.commit()
+        conn.close()
+        return jsonify({'sucesso': True})
+    except Exception as e:
+        print(f"Erro ao reservar: {e}")
+        return jsonify({'sucesso': False, 'mensagem': 'Este item já foi reservado ou ocorreu um erro!'})
+
+@app.route('/confirmar-presenca', methods=['POST'])
+def confirmar_presenca():
+    data = request.get_json()
+    nome = data.get('nome')
+    whatsapp = data.get('whatsapp')
+    acompanhantes = data.get('acompanhantes', 1)
+
+    if not nome or not whatsapp:
+        return jsonify({'sucesso': False, 'mensagem': 'Preencha nome e WhatsApp!'})
 
     try:
         conn = get_db_connection()
@@ -95,36 +149,10 @@ def confirmar_presenca():
         cursor.execute(query, (nome, whatsapp, acompanhantes))
         conn.commit()
         conn.close()
-        flash('Presença confirmada com sucesso!', 'success')
+        return jsonify({'sucesso': True})
     except Exception as e:
-        print(f"Erro ao salvar presença: {e}")
-        flash('Erro ao confirmar presença.', 'danger')
-
-    return redirect(url_for('index'))
-
-@app.route('/escolher_presente', methods=['POST'])
-def escolher_presente():
-    item = request.form.get('item')
-    nome_convidado = request.form.get('nome_convidado')
-
-    if item and nome_convidado:
-        try:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            is_postgres = bool(os.environ.get('DATABASE_URL'))
-            
-            query = (
-                "INSERT INTO presentes_escolhidos (item, nome_convidado) VALUES (%s, %s)"
-                if is_postgres else
-                "INSERT INTO presentes_escolhidos (item, nome_convidado) VALUES (?, ?)"
-            )
-            cursor.execute(query, (item, nome_convidado))
-            conn.commit()
-            conn.close()
-        except Exception as e:
-            print(f"Erro ao salvar presente: {e}")
-
-    return redirect(url_for('index'))
+        print(f"Erro ao confirmar presença: {e}")
+        return jsonify({'sucesso': False, 'mensagem': 'Erro ao confirmar presença.'})
 
 @app.route('/admin')
 def admin():
@@ -132,13 +160,11 @@ def admin():
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Busca presenças
         cursor.execute("SELECT id, nome, whatsapp, acompanhantes FROM presencas ORDER BY id DESC")
         presencas = cursor.fetchall()
         
-        # Busca presentes escolhidos
         try:
-            cursor.execute("SELECT id, item, nome_convidado FROM presentes_escolhidos ORDER BY id DESC")
+            cursor.execute("SELECT id, item, nome_convidado, whatsapp FROM presentes_escolhidos ORDER BY id DESC")
             presentes = cursor.fetchall()
         except Exception:
             presentes = []
@@ -148,10 +174,10 @@ def admin():
         total_pessoas = 0
         for p in presencas:
             try:
-                acomp = int(p[3]) if p[3] is not None else 0
+                acomp = int(p[3]) if p[3] is not None else 1
             except (ValueError, TypeError):
-                acomp = 0
-            total_pessoas += 1 + acomp
+                acomp = 1
+            total_pessoas += acomp
         
         return render_template('admin.html', presencas=presencas, presentes=presentes, total_pessoas=total_pessoas)
     except Exception as e:
